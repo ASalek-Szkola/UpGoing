@@ -1,0 +1,29 @@
+game:
+  title: "Up Going"
+  width: 500
+  height: 700
+  initial_speed: 3       # Initial speed of platfroms downwards (in pixels/frame)
+  max_speed: 8
+  fps: 60
+
+player:
+  size: 30
+  gravity: 0.8           # Siła grawitacji (przyspieszenie w dół)
+  jump_power: -18        # Początkowa prędkość pionowa podczas skoku (ujemna = w górę)
+  horizontal_speed: 6    # Prędkość ruchu gracza w poziomie (lewo/prawo)
+
+platforms:
+  base_height: 15
+  # Min and max width of generated platform
+  min_width: 80
+  max_width: 150
+
+# Platform generation rules
+generation:
+  min_gap_y: 100         # Minimal vertical distance between platforms
+  max_gap_y: 250         # Maximal vertical distance between platforms
+  spawn_margin_top: 50   # Top margin after which generation stars
+  spawn_rate: 100        # How many pixels in height should the new platform be generated at
+
+scoring:
+  multiplier: 0.1        # Multiplier for calculating points from height (e.g. 100px of height = 10 points)
