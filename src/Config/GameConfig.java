@@ -106,38 +106,11 @@ public class GameConfig {
     }
 
     public static class Player {
-        private int size;
         private double gravity;
         private double jump_power;
         private double horizontal_speed;
-
-        public int getWidth() {
-            return width;
-        }
-
-        public void setWidth(int width) {
-            this.width = width;
-        }
-
         private int width;
-
-        public int getHeight() {
-            return height;
-        }
-
-        public void setHeight(int height) {
-            this.height = height;
-        }
-
         private int height;
-
-        public int getSize() {
-            return size;
-        }
-
-        public void setSize(int size) {
-            this.size = size;
-        }
 
         public double getGravity() {
             return gravity;
@@ -162,12 +135,30 @@ public class GameConfig {
         public void setHorizontal_speed(double horizontal_speed) {
             this.horizontal_speed = horizontal_speed;
         }
+
+        public int getWidth() {
+            return width;
+        }
+
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        public int getHeight() {
+            return height;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
+        }
     }
 
     public static class Platforms {
         private int base_height;
         private int min_width;
         private int max_width;
+        private double speed;
+        private int spacing;
 
         public int getBase_height() {
             return base_height;
@@ -191,6 +182,22 @@ public class GameConfig {
 
         public void setMax_width(int max_width) {
             this.max_width = max_width;
+        }
+
+        public double getSpeed() {
+            return speed;
+        }
+
+        public void setSpeed(double speed) {
+            this.speed = speed;
+        }
+
+        public int getSpacing() {
+            return spacing;
+        }
+
+        public void setSpacing(int spacing) {
+            this.spacing = spacing;
         }
     }
 

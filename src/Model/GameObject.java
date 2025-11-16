@@ -44,4 +44,12 @@ public abstract class GameObject {
     public void setHeight(int height) {
         this.height = height;
     }
+
+    public boolean isAbovePlatform(double platformY) {
+        return y + height <= platformY + 10;
+    }
+
+    public Rectangle getBounds() {
+        return new Rectangle((int)x, (int)y, width, height);
+    }
 }
