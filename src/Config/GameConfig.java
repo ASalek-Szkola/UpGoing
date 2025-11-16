@@ -111,6 +111,26 @@ public class GameConfig {
         private double jump_power;
         private double horizontal_speed;
 
+        public int getWidth() {
+            return width;
+        }
+
+        public void setWidth(int width) {
+            this.width = width;
+        }
+
+        private int width;
+
+        public int getHeight() {
+            return height;
+        }
+
+        public void setHeight(int height) {
+            this.height = height;
+        }
+
+        private int height;
+
         public int getSize() {
             return size;
         }

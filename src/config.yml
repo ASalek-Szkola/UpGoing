@@ -11,6 +11,8 @@ player:
   gravity: 0.8           # Siła grawitacji (przyspieszenie w dół)
   jump_power: -18        # Początkowa prędkość pionowa podczas skoku (ujemna = w górę)
   horizontal_speed: 6    # Prędkość ruchu gracza w poziomie (lewo/prawo)
+  width: 50
+  height: 50
 
 platforms:
   base_height: 15

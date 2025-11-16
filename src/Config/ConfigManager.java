@@ -62,5 +62,9 @@ public class ConfigManager {
         return getConfig().getPlayer();
     }
 
-    // ... i analogicznie dla Platforms, Generation, Scoring
+    public static GameConfig.Platforms getPlatforms() { return getConfig().getPlatforms(); }
+
+    public static GameConfig.Generation getGeneration() { return getConfig().getGeneration(); }
+
+    public static GameConfig.Scoring getScoring() { return getConfig().getScoring(); }
 }

@@ -1,6 +1,6 @@
+package View;
+
 import Config.ConfigManager;
-import Config.GameConfig;
-import Game.GamePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -8,7 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MainMenu extends JFrame {
-    MainMenu() {
+    public MainMenu() {
         setTitle(ConfigManager.getConfig().getGame().getTitle());
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
