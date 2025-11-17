@@ -5,9 +5,9 @@ game:
   fps: 60
 
 player:
-  gravity: 48
-  jump_power: -1080
-  horizontal_speed: 360
+  gravity: 80
+  jump_power: -1180
+  horizontal_speed: 500
   width: 30
   height: 30
 
@@ -15,7 +15,7 @@ platforms:
   base_height: 15
   min_width: 80
   max_width: 150
-  speed: 120.0
+  speed: 200.0
   spacing: 120
 
 generation:
