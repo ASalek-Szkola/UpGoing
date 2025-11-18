@@ -111,6 +111,7 @@ public class GameConfig {
         private double horizontal_speed;
         private int width;
         private int height;
+        private int jump_window_frames;
 
         public double getGravity() {
             return gravity;
@@ -150,6 +151,14 @@ public class GameConfig {
 
         public void setHeight(int height) {
             this.height = height;
+        }
+
+        public int getJump_window_frames() {
+            return jump_window_frames;
+        }
+
+        public void setJump_window_frames(int jump_window_frames) {
+            this.jump_window_frames = jump_window_frames;
         }
     }
 

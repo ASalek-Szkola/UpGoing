@@ -13,7 +13,7 @@ public class Player extends GameObject implements Collidable {
     private double prevY;
     private boolean isAirborne = false;
     private int jumpWindow = 0;
-    private static final int JUMP_WINDOW_FRAMES = 8;
+    private final double gravity = ConfigManager.getPlayerSettings().getGravity();
 
     public Player(double x, double y) {
         super(x, y,
@@ -26,7 +26,11 @@ public class Player extends GameObject implements Collidable {
 
     // Nadpisywanie metod abstrakcyjnych z GameObject
     @Override
-    public void update() {
+    public void update(double deltaTime) {
+        prevY = y;
+        x += velocityX * deltaTime;
+        velocityY += gravity * deltaTime;
+        y += velocityY * deltaTime;
         prevY = y;
         double fps = ConfigManager.getGameSettings().getFps();
         double gravityPerFrame = ConfigManager.getPlayerSettings().getGravity() / fps;
@@ -35,7 +39,7 @@ public class Player extends GameObject implements Collidable {
             velocityY += gravityPerFrame;
         } else {
             velocityY = 0;
-            if (jumpWindow < JUMP_WINDOW_FRAMES) jumpWindow++;
+            if (jumpWindow < ConfigManager.getPlayerSettings().getJump_window_frames()) jumpWindow++;
         }
         this.y += velocityY;
         this.x += velocityXPerFrame;

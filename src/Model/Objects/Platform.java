@@ -6,22 +6,19 @@ import java.awt.*;
 import Config.ConfigManager;
 
 public class Platform extends GameObject implements Collidable {
-    private double velocityY;
+    private final double velocityY;
     private double prevY;
 
-    public Platform(double x, double y) {
-        super(x, y,
-            ConfigManager.getPlatformsSettings().getMin_width(),
-            ConfigManager.getPlatformsSettings().getBase_height()
-        );
+    public Platform(double x, double y, int width, int height) {
+        super(x, y, width, height);
         this.velocityY = ConfigManager.getPlatformsSettings().getSpeed();
         this.prevY = y;
     }
 
     @Override
-    public void update() {
-        // store previous position for swept collision checks
+    public void update(double deltaTime) {
         prevY = y;
+        y += velocityY * deltaTime;
         double fps = ConfigManager.getGameSettings().getFps();
         double velocityYPerFrame = velocityY / fps;
         this.y += velocityYPerFrame;

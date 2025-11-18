@@ -15,13 +15,15 @@ public class GamePanel extends JPanel implements Runnable {
     private boolean running = true;
     private Player player;
     private ArrayList<Platform> platforms;
+    private Image backgroundImage;
     private boolean gameOver = false;
 
     private int platformSpacing = ConfigManager.getPlatformsSettings().getSpacing();
     private double platformSpeed = ConfigManager.getPlatformsSettings().getSpeed();
-    private int platformWidth = ConfigManager.getPlatformsSettings().getMin_width();
     private int platformHeight = ConfigManager.getPlatformsSettings().getBase_height();
     private static final int MAX_PLATFORMS = 30;
+
+    private long lastUpdateTime = System.nanoTime();
 
     public GamePanel() {
         setPreferredSize(new Dimension(
@@ -32,6 +34,9 @@ public class GamePanel extends JPanel implements Runnable {
         setFocusable(true);
         player = new Player(ConfigManager.getGameSettings().getWidth() / 2.0, 0);
         platforms = new ArrayList<>();
+
+        backgroundImage = new ImageIcon(getClass().getResource("/images/background.jpg")).getImage();
+
         initPlatforms();
         addKeyListener(new KeyAdapter() {
             @Override
@@ -67,22 +72,33 @@ public class GamePanel extends JPanel implements Runnable {
         startGame();
     }
 
+    private int generatePlatformWidth() {
+        int minWidth = ConfigManager.getPlatformsSettings().getMin_width();
+        int maxWidth = ConfigManager.getPlatformsSettings().getMax_width();
+        return (int)(minWidth + (Math.random() * (maxWidth - minWidth)));
+    }
+
     private void initPlatforms() {
         int panelHeight = ConfigManager.getGameSettings().getHeight();
         int panelWidth = ConfigManager.getGameSettings().getWidth();
         for (int i = 0; i < panelHeight / platformSpacing; i++) {
+            int platformWidth = generatePlatformWidth();
             double x = Math.random() * (panelWidth - platformWidth);
             double y = panelHeight - i * platformSpacing;
-            platforms.add(new Platform(x, y));
+            platforms.add(new Platform(x, y, platformWidth, platformHeight));
         }
     }
 
     public void startGame() {
         int fps = ConfigManager.getGameSettings().getFps();
         int delay = 1000 / fps;
+        lastUpdateTime = System.nanoTime();
         gameTimer = new Timer(delay, e -> {
             if (!gameOver) {
-                update();
+                long now = System.nanoTime();
+                double deltaTime = (now - lastUpdateTime) / 1_000_000_000.0;
+                lastUpdateTime = now;
+                update(deltaTime);
                 repaint();
             }
         });
@@ -94,13 +110,11 @@ public class GamePanel extends JPanel implements Runnable {
         // No longer needed, replaced by Swing Timer
     }
 
-    public void update() {
-        // Update player and platforms first so prev/current positions are available
-        player.update();
+    public void update(double deltaTime) {
+        player.update(deltaTime);
         for (Platform p : platforms) {
-            p.update();
+            p.update(deltaTime);
         }
-
         checkCollisions();
         removeOffscreenPlatforms();
         generateNewPlatforms();
@@ -149,16 +163,19 @@ public class GamePanel extends JPanel implements Runnable {
 
     private void generateNewPlatforms() {
         if (platforms.size() >= MAX_PLATFORMS) return;
+        int minWidth = ConfigManager.getPlatformsSettings().getMin_width();
+        int maxWidth = ConfigManager.getPlatformsSettings().getMax_width();
+        int platformWidth = generatePlatformWidth();
+
         if (platforms.isEmpty()) {
             double x = Math.random() * (getWidth() - platformWidth);
-            platforms.add(new Platform(x, -platformHeight));
+            platforms.add(new Platform(x, -platformHeight, platformWidth, platformHeight));
             return;
         }
         Platform last = platforms.get(platforms.size() - 1);
-        // Only add a new platform if the last one is far enough down
         if (last.getY() > platformSpacing) {
             double x = Math.random() * (getWidth() - platformWidth);
-            platforms.add(new Platform(x, -platformHeight));
+            platforms.add(new Platform(x, -platformHeight, platformWidth, platformHeight));
         }
     }
 
@@ -172,6 +189,9 @@ public class GamePanel extends JPanel implements Runnable {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+
         for (Platform p : platforms) {
             if (p.getY() + p.getHeight() > 0) {
                 p.draw(g);
