@@ -11,8 +11,11 @@ public class Player extends GameObject implements Collidable {
     private double velocityX;
     private boolean onPlatform = false;
     private double prevY;
-    private boolean isAirborne = false;
-    private int jumpWindow = 0;
+
+    // CHANGED: Track time instead of frames
+    private double timeSinceGrounded = 0;
+
+    // Gravity (Pixels/Second^2)
     private final double gravity = ConfigManager.getPlayerSettings().getGravity();
 
     public Player(double x, double y) {
@@ -24,25 +27,28 @@ public class Player extends GameObject implements Collidable {
         this.velocityX = 0;
     }
 
-    // Nadpisywanie metod abstrakcyjnych z GameObject
     @Override
     public void update(double deltaTime) {
         prevY = y;
-        x += velocityX * deltaTime;
-        velocityY += gravity * deltaTime;
-        y += velocityY * deltaTime;
-        prevY = y;
-        double fps = ConfigManager.getGameSettings().getFps();
-        double gravityPerFrame = ConfigManager.getPlayerSettings().getGravity() / fps;
-        double velocityXPerFrame = velocityX / fps;
-        if (!onPlatform) {
-            velocityY += gravityPerFrame;
+
+        // --- COYOTE TIME LOGIC ---
+        if (onPlatform) {
+            // If we are standing on solid ground, reset the timer to 0
+            timeSinceGrounded = 0;
+
+            // Reset vertical velocity
+            if (velocityY > 0) velocityY = 0;
         } else {
-            velocityY = 0;
-            if (jumpWindow < ConfigManager.getPlayerSettings().getJump_window_frames()) jumpWindow++;
+            // If we are falling (or just walked off), increase the timer by seconds elapsed
+            timeSinceGrounded += deltaTime;
+
+            // Apply Gravity
+            velocityY += gravity * deltaTime;
         }
-        this.y += velocityY;
-        this.x += velocityXPerFrame;
+
+        // Apply Movement
+        x += velocityX * deltaTime;
+        y += velocityY * deltaTime;
     }
 
     @Override
@@ -51,17 +57,12 @@ public class Player extends GameObject implements Collidable {
         g.fillOval((int)x, (int)y, width, height);
     }
 
-    // Implementacja metod z interfejsu Collidable
     @Override
     public void onCollision(GameObject other) {
-        // No automatic jump, handled by GamePanel
-        // Only set position if intersecting
         if (other instanceof Platform) {
             Rectangle playerBounds = getBounds();
             Rectangle platformBounds = other.getBounds();
-            if (playerBounds.intersects(platformBounds) && velocityY > 0) {
-                y = other.getY() - height;
-            }
+            // Checking logic is handled mostly in GamePanel
         }
     }
 
@@ -70,46 +71,34 @@ public class Player extends GameObject implements Collidable {
         return new Rectangle((int)x, (int)y, width, height);
     }
 
-    // Metody specyficzne dla gracza
     public void jump() {
-        velocityY = (ConfigManager.getPlayerSettings().getJump_power() * 1.2) / ConfigManager.getGameSettings().getFps();
-        isAirborne = true;
-        jumpWindow = 0;
-    }
-    public boolean isAirborne() {
-        return isAirborne;
-    }
-    public void setAirborne(boolean value) {
-        isAirborne = value;
+        // Apply jump velocity
+        velocityY = ConfigManager.getPlayerSettings().getJump_power();
+
+        // IMPORTANT: Invalidate Coyote Time immediately.
+        // If we don't do this, the player could spam jump while in the air
+        // if the window was long enough.
+        timeSinceGrounded = 100.0; // Set to a high number effectively closing the window
     }
 
-    public void setVelocityX(double vx) {
-        this.velocityX = vx;
+    // --- UPDATED HELPER METHODS ---
+
+    public boolean canJumpNow() {
+        // We can jump if the time since we left the platform is less than the config limit
+        return timeSinceGrounded <= ConfigManager.getPlayerSettings().getJump_time_window();
     }
 
-    public void setVelocityY(double vy) {
-        this.velocityY = vy;
-    }
+    public void setVelocityX(double vx) { this.velocityX = vx; }
+    public void setVelocityY(double vy) { this.velocityY = vy; }
+    public double getVelocityY() { return velocityY; }
+    public void setY(double y) { this.y = y; }
+    public int getHeight() { return height; }
 
-    public double getVelocityY() {
-        return velocityY;
-    }
-    public void setY(double y) {
-        this.y = y;
-    }
-    public int getHeight() {
-        return height;
-    }
     public void setOnPlatform(boolean value) {
         this.onPlatform = value;
+        // Note: We don't reset timer here, we do it in update()
+        // because this might be called multiple times per frame.
     }
-    public double getPrevY() {
-        return prevY;
-    }
-    public boolean canJumpNow() {
-        return jumpWindow > 0;
-    }
-    public void resetJumpWindow() {
-        jumpWindow = 0;
-    }
+
+    public double getPrevY() { return prevY; }
 }

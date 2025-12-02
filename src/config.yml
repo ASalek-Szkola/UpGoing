@@ -1,23 +1,23 @@
 game:
   title: "Up Going"
-  width: 500
-  height: 700
+  width: 576
+  height: 720
   fps: 60
 
 player:
-  gravity: 50
-  jump_power: -1500
-  horizontal_speed: 250
+  gravity: 1200         # Pixels/Second^2
+  jump_power: -700      # Pixels/Second
+  horizontal_speed: 400 # Pixels/Second
   width: 30
   height: 30
-  jump_window_frames: 5
+  jump_time_window: 0.15
 
 platforms:
-  base_height: 15
+  base_height: 20
   min_width: 80
   max_width: 150
-  speed: 75.0
-  spacing: 100
+  speed: 100.0          # Pixels/Second downwards
+  spacing: 120
 
 generation:
   min_gap_y: 100

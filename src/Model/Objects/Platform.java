@@ -11,6 +11,7 @@ public class Platform extends GameObject implements Collidable {
 
     public Platform(double x, double y, int width, int height) {
         super(x, y, width, height);
+        // Speed in Pixels Per Second
         this.velocityY = ConfigManager.getPlatformsSettings().getSpeed();
         this.prevY = y;
     }
@@ -18,10 +19,10 @@ public class Platform extends GameObject implements Collidable {
     @Override
     public void update(double deltaTime) {
         prevY = y;
+        // Position += Velocity * Time
         y += velocityY * deltaTime;
-        double fps = ConfigManager.getGameSettings().getFps();
-        double velocityYPerFrame = velocityY / fps;
-        this.y += velocityYPerFrame;
+
+        // Removed the "velocityYPerFrame" logic entirely.
     }
 
     @Override
@@ -32,7 +33,7 @@ public class Platform extends GameObject implements Collidable {
 
     @Override
     public void onCollision(GameObject other) {
-        // Platform collision logic if needed
+        // Logic handled in GamePanel
     }
 
     @Override

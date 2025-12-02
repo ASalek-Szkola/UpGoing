@@ -1,3 +1,5 @@
+// src/Config/GameConfig.java
+
 package Config;
 
 public class GameConfig {
@@ -112,6 +114,7 @@ public class GameConfig {
         private int width;
         private int height;
         private int jump_window_frames;
+        private double jump_time_window;
 
         public double getGravity() {
             return gravity;
@@ -153,12 +156,12 @@ public class GameConfig {
             this.height = height;
         }
 
-        public int getJump_window_frames() {
-            return jump_window_frames;
+        public double getJump_time_window() {
+            return jump_time_window;
         }
 
-        public void setJump_window_frames(int jump_window_frames) {
-            this.jump_window_frames = jump_window_frames;
+        public void setJump_time_window(double jump_time_window) {
+            this.jump_time_window = jump_time_window;
         }
     }
 
