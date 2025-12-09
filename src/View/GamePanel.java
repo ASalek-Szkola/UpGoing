@@ -1,8 +1,7 @@
-// src/View/GamePanel.java
-
 package View;
 
 import Config.ConfigManager;
+import Model.Objects.AutoJumpingPlatform;
 import Model.Objects.Player;
 import Model.Objects.Platform;
 
@@ -11,6 +10,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class GamePanel extends JPanel {
     private Timer gameTimer;
@@ -23,11 +23,12 @@ public class GamePanel extends JPanel {
     private int platformHeight = ConfigManager.getPlatformsSettings().getBase_height();
     private static final int MAX_PLATFORMS = 30;
 
-    // Time tracking
     private long lastUpdateTime;
-
-    // Physics safety cap: Max 0.05s (20 FPS) simulation step to prevent tunneling
     private static final double MAX_DELTA_TIME = 0.05;
+
+    // Input Buffer
+    private double jumpBufferTimer = 0;
+    private static final double JUMP_BUFFER_DURATION = ConfigManager.getPlayerSettings().getJump_buffer_duration();
 
     public GamePanel() {
         setPreferredSize(new Dimension(
@@ -37,13 +38,11 @@ public class GamePanel extends JPanel {
         setDoubleBuffered(true);
         setFocusable(true);
 
-        // Initialize Player
         player = new Player(ConfigManager.getGameSettings().getWidth() / 2.0, 0);
         platforms = new ArrayList<>();
 
-        // Load Background (Ensure this file exists in resources)
         try {
-            backgroundImage = new ImageIcon(getClass().getResource("/images/background.jpg")).getImage();
+            backgroundImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/background.jpg"))).getImage();
         } catch (Exception e) {
             System.err.println("Background image not found.");
         }
@@ -61,13 +60,8 @@ public class GamePanel extends JPanel {
                         player.setVelocityX(ConfigManager.getPlayerSettings().getHorizontal_speed());
                         break;
                     case KeyEvent.VK_SPACE:
-                        // Updated to use the new time-based logic
-                        if (player.canJumpNow()) {
-                            player.jump();
-                            // We don't need to manually set setOnPlatform(false) here,
-                            // as the jump velocity will move the player up in the next update,
-                            // naturally breaking the collision.
-                        }
+                        // Instead of jumping immediately, register the request
+                        jumpBufferTimer = JUMP_BUFFER_DURATION;
                         break;
                     case KeyEvent.VK_R:
                         restartGame();
@@ -79,7 +73,6 @@ public class GamePanel extends JPanel {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_LEFT:
                     case KeyEvent.VK_RIGHT:
-                        // Stop horizontal movement
                         player.setVelocityX(0);
                         break;
                 }
@@ -95,6 +88,16 @@ public class GamePanel extends JPanel {
         return (int)(minWidth + (Math.random() * (maxWidth - minWidth)));
     }
 
+    private Platform createRandomPlatform(double x, double y, int width, int height) {
+        double chance = ConfigManager.getPlatformsSettings().getAuto_jump_chance();
+
+        if (Math.random() < chance) {
+            return new AutoJumpingPlatform(x, y, width, height);
+        } else {
+            return new Platform(x, y, width, height);
+        }
+    }
+
     private void initPlatforms() {
         int panelHeight = ConfigManager.getGameSettings().getHeight();
         int panelWidth = ConfigManager.getGameSettings().getWidth();
@@ -102,27 +105,40 @@ public class GamePanel extends JPanel {
             int platformWidth = generatePlatformWidth();
             double x = Math.random() * (panelWidth - platformWidth);
             double y = panelHeight - i * platformSpacing;
-            platforms.add(new Platform(x, y, platformWidth, platformHeight));
+
+            platforms.add(createRandomPlatform(x, y, platformWidth, platformHeight));
+        }
+    }
+
+    private void generateNewPlatforms() {
+        if (platforms.size() >= MAX_PLATFORMS) return;
+        int platformWidth = generatePlatformWidth();
+
+        if (platforms.isEmpty()) {
+            double x = Math.random() * (getWidth() - platformWidth);
+            platforms.add(createRandomPlatform(x, -platformHeight, platformWidth, platformHeight));
+            return;
+        }
+        Platform last = platforms.getLast();
+        if (last.getY() > platformSpacing) {
+            double x = Math.random() * (getWidth() - platformWidth);
+            platforms.add(createRandomPlatform(x, -platformHeight, platformWidth, platformHeight));
         }
     }
 
     public void startGame() {
         int targetFps = ConfigManager.getGameSettings().getFps();
-        int delay = 1000 / targetFps; // Target delay in ms
+        int delay = 1000 / targetFps;
 
         lastUpdateTime = System.nanoTime();
 
         gameTimer = new Timer(delay, e -> {
             if (!gameOver) {
                 long now = System.nanoTime();
-                // Calculate elapsed time in seconds
                 double deltaTime = (now - lastUpdateTime) / 1_000_000_000.0;
                 lastUpdateTime = now;
 
-                // Prevent physics explosion if game hangs or window is dragged
-                if (deltaTime > MAX_DELTA_TIME) {
-                    deltaTime = MAX_DELTA_TIME;
-                }
+                if (deltaTime > MAX_DELTA_TIME) deltaTime = MAX_DELTA_TIME;
 
                 update(deltaTime);
                 repaint();
@@ -132,7 +148,15 @@ public class GamePanel extends JPanel {
     }
 
     public void update(double deltaTime) {
-        // Update entities with pure Delta Time
+        // Process Input Buffer
+        if (jumpBufferTimer > 0) {
+            jumpBufferTimer -= deltaTime;
+            if (player.canJumpNow()) {
+                player.jump();
+                jumpBufferTimer = 0; // Consumption of input
+            }
+        }
+
         player.update(deltaTime);
         for (Platform p : platforms) {
             p.update(deltaTime);
@@ -148,39 +172,105 @@ public class GamePanel extends JPanel {
     }
 
     private void checkCollisions() {
-        // Assume player is in air unless we find a collision
         player.setOnPlatform(false);
+        double platformSpeed = ConfigManager.getPlatformsSettings().getSpeed();
 
         for (Platform p : platforms) {
-            // swept collision: check if player crossed platform top this frame
+            // ================================================================
+            // STEP 1: LANDING LOGIC (Swept Collision)
+            // ================================================================
+            // This handles high-speed falling where the player might pass through
+            // the top edge between frames.
+
             double playerPrevBottom = player.getPrevY() + player.getHeight();
             double playerCurrBottom = player.getY() + player.getHeight();
             double platformPrevTop = p.getPrevY();
             double platformCurrTop = p.getY();
 
-            // Check if player passed through the platform downwards
+            double epsilon = 2.0;
             double relativePrev = playerPrevBottom - platformPrevTop;
             double relativeCurr = playerCurrBottom - platformCurrTop;
-            boolean crossedDownwards = relativePrev <= 0 && relativeCurr >= 0;
 
-            // Simple velocity check to ensure we don't snap while jumping up through a platform
-            boolean falling = player.getVelocityY() >= 0;
+            boolean crossedDownwards = relativePrev <= epsilon && relativeCurr >= -epsilon;
+            boolean falling = player.getVelocityY() >= 0; // Only land if falling or flat
 
-            // Horizontal overlap check
+            // Horizontal alignment check for landing
             double playerLeft = player.getX();
             double playerRight = player.getX() + player.getWidth();
             double platformLeft = p.getX();
             double platformRight = p.getX() + p.getWidth();
-            boolean horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
+            // Shrink hit box slightly (2px) to prevent landing on the exact pixel edge
+            boolean horizontalOverlap = playerRight > platformLeft + 2 && playerLeft < platformRight - 2;
 
             if (crossedDownwards && falling && horizontalOverlap) {
-                // Snap player to current platform top
+                // LANDING RESOLUTION
                 player.setY(platformCurrTop - player.getHeight());
-                player.setVelocityY(0); // Stop falling
 
-                // This flag enables the Coyote Time reset in the next Player.update()
-                player.setOnPlatform(true);
-                return;
+                if (p instanceof AutoJumpingPlatform) {
+                    player.jump();
+                } else {
+                    player.setVelocityY(platformSpeed); // Sync with platform
+                    player.setOnPlatform(true);
+                }
+
+                // If we landed, we don't need to check for side collisions on this platform
+                continue;
+            }
+
+            // Side collisions
+            Rectangle pRect = player.getBounds();
+            Rectangle platRect = p.getBounds();
+
+            if (pRect.intersects(platRect)) {
+                // We are intersecting, but NOT landing. We must resolve the collision.
+
+                // Calculate overlaps on both axes
+                double overlapX = 0;
+                double overlapY = 0;
+
+                double pCenterX = player.getX() + player.getWidth() / 2.0;
+                double platCenterX = p.getX() + p.getWidth() / 2.0;
+                double dx = pCenterX - platCenterX;
+                // Total width divided by 2
+                double combinedHalfWidths = (player.getWidth() + p.getWidth()) / 2.0;
+                overlapX = combinedHalfWidths - Math.abs(dx);
+
+                double pCenterY = player.getY() + player.getHeight() / 2.0;
+                double platCenterY = p.getY() + p.getHeight() / 2.0;
+                double dy = pCenterY - platCenterY;
+                double combinedHalfHeights = (player.getHeight() + p.getHeight()) / 2.0;
+                overlapY = combinedHalfHeights - Math.abs(dy);
+
+                // Determine the "Path of Least Resistance"
+                // If overlapX is smaller, we hit the side. If overlapY is smaller, we hit vertical.
+
+                if (overlapX < overlapY) {
+                    // Left / Right
+
+                    if (dx < 0) {
+                        // Player is to the left, push left
+                        player.setX(p.getX() - player.getWidth());
+                    } else {
+                        // Player is to the right, push right
+                        player.setX(p.getX() + p.getWidth());
+                    }
+
+                    // Kill horizontal momentum
+                    player.setVelocityX(0);
+
+                } else {
+                    // Bottom
+
+                    if (dy > 0) {
+                        // Player center is below Platform center -> Head Bump
+
+                        // Push player down below the platform
+                        player.setY(p.getY() + p.getHeight());
+
+                        // Kill upward momentum.
+                        player.setVelocityY(platformSpeed);
+                    }
+                }
             }
         }
     }
@@ -189,51 +279,27 @@ public class GamePanel extends JPanel {
         platforms.removeIf(p -> p.getY() > getHeight());
     }
 
-    private void generateNewPlatforms() {
-        if (platforms.size() >= MAX_PLATFORMS) return;
-
-        int platformWidth = generatePlatformWidth();
-
-        if (platforms.isEmpty()) {
-            double x = Math.random() * (getWidth() - platformWidth);
-            platforms.add(new Platform(x, -platformHeight, platformWidth, platformHeight));
-            return;
-        }
-
-        Platform last = platforms.getLast();
-        if (last.getY() > platformSpacing) {
-            double x = Math.random() * (getWidth() - platformWidth);
-            platforms.add(new Platform(x, -platformHeight, platformWidth, platformHeight));
-        }
-    }
-
     private void restartGame() {
         gameOver = false;
         player = new Player(getWidth() / 2.0, 0);
         platforms.clear();
         initPlatforms();
-        lastUpdateTime = System.nanoTime(); // Reset timer to prevent jump on restart
+        lastUpdateTime = System.nanoTime();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-
         if (backgroundImage != null) {
             g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
         } else {
-            // Fallback background
             g.setColor(Color.CYAN);
             g.fillRect(0, 0, getWidth(), getHeight());
         }
-
         for (Platform p : platforms) {
-            if (p.getY() + p.getHeight() > 0) {
-                p.draw(g);
-            }
+            if (p.getY() + p.getHeight() > 0) p.draw(g);
         }
         player.draw(g);
-
         if (gameOver) {
             g.setColor(Color.BLACK);
             g.setFont(new Font("Arial", Font.BOLD, 48));

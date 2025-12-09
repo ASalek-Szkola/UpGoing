@@ -116,6 +116,16 @@ public class GameConfig {
         private int jump_window_frames;
         private double jump_time_window;
 
+        public double getJump_buffer_duration() {
+            return jump_buffer_duration;
+        }
+
+        public void setJump_buffer_duration(double jump_buffer_duration) {
+            this.jump_buffer_duration = jump_buffer_duration;
+        }
+
+        private double jump_buffer_duration;
+
         public double getGravity() {
             return gravity;
         }
@@ -171,6 +181,15 @@ public class GameConfig {
         private int max_width;
         private double speed;
         private int spacing;
+        private double auto_jump_chance;
+
+        public double getAuto_jump_chance() {
+            return auto_jump_chance;
+        }
+
+        public void setAuto_jump_chance(double auto_jump_chance) {
+            this.auto_jump_chance = auto_jump_chance;
+        }
 
         public int getBase_height() {
             return base_height;

@@ -12,11 +12,9 @@ public class Player extends GameObject implements Collidable {
     private boolean onPlatform = false;
     private double prevY;
 
-    // CHANGED: Track time instead of frames
     private double timeSinceGrounded = 0;
-
-    // Gravity (Pixels/Second^2)
     private final double gravity = ConfigManager.getPlayerSettings().getGravity();
+    private final double platformSpeed = ConfigManager.getPlatformsSettings().getSpeed();
 
     public Player(double x, double y) {
         super(x, y,
@@ -31,22 +29,16 @@ public class Player extends GameObject implements Collidable {
     public void update(double deltaTime) {
         prevY = y;
 
-        // --- COYOTE TIME LOGIC ---
         if (onPlatform) {
-            // If we are standing on solid ground, reset the timer to 0
             timeSinceGrounded = 0;
 
-            // Reset vertical velocity
-            if (velocityY > 0) velocityY = 0;
+            // Move down at the same speed as the platform, to prevent stutters
+            velocityY = platformSpeed;
         } else {
-            // If we are falling (or just walked off), increase the timer by seconds elapsed
             timeSinceGrounded += deltaTime;
-
-            // Apply Gravity
             velocityY += gravity * deltaTime;
         }
 
-        // Apply Movement
         x += velocityX * deltaTime;
         y += velocityY * deltaTime;
     }
@@ -59,11 +51,7 @@ public class Player extends GameObject implements Collidable {
 
     @Override
     public void onCollision(GameObject other) {
-        if (other instanceof Platform) {
-            Rectangle playerBounds = getBounds();
-            Rectangle platformBounds = other.getBounds();
-            // Checking logic is handled mostly in GamePanel
-        }
+        // Handled in GamePanel
     }
 
     @Override
@@ -72,19 +60,16 @@ public class Player extends GameObject implements Collidable {
     }
 
     public void jump() {
-        // Apply jump velocity
         velocityY = ConfigManager.getPlayerSettings().getJump_power();
 
-        // IMPORTANT: Invalidate Coyote Time immediately.
-        // If we don't do this, the player could spam jump while in the air
-        // if the window was long enough.
-        timeSinceGrounded = 100.0; // Set to a high number effectively closing the window
+        // Break connection immediately
+        onPlatform = false;
+
+        // Invalidate Coyote Time
+        timeSinceGrounded = 100.0;
     }
 
-    // --- UPDATED HELPER METHODS ---
-
     public boolean canJumpNow() {
-        // We can jump if the time since we left the platform is less than the config limit
         return timeSinceGrounded <= ConfigManager.getPlayerSettings().getJump_time_window();
     }
 
@@ -93,12 +78,6 @@ public class Player extends GameObject implements Collidable {
     public double getVelocityY() { return velocityY; }
     public void setY(double y) { this.y = y; }
     public int getHeight() { return height; }
-
-    public void setOnPlatform(boolean value) {
-        this.onPlatform = value;
-        // Note: We don't reset timer here, we do it in update()
-        // because this might be called multiple times per frame.
-    }
-
+    public void setOnPlatform(boolean value) { this.onPlatform = value; }
     public double getPrevY() { return prevY; }
 }
