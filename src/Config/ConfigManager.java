@@ -68,8 +68,6 @@ public class ConfigManager {
 
     public static GameConfig.Generation getGeneration() { return getConfig().getGeneration(); }
 
-    public static GameConfig.Scoring getScoring() { return getConfig().getScoring(); }
-
     public static GameConfig.Platforms getPlatformsSettings() {
         return getConfig().getPlatforms();
     }

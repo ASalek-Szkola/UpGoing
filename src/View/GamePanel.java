@@ -30,6 +30,8 @@ public class GamePanel extends JPanel {
     private double jumpBufferTimer = 0;
     private static final double JUMP_BUFFER_DURATION = ConfigManager.getPlayerSettings().getJump_buffer_duration();
 
+    private int score = 0;
+
     public GamePanel() {
         setPreferredSize(new Dimension(
                 ConfigManager.getGameSettings().getWidth(),
@@ -64,7 +66,9 @@ public class GamePanel extends JPanel {
                         jumpBufferTimer = JUMP_BUFFER_DURATION;
                         break;
                     case KeyEvent.VK_R:
-                        restartGame();
+                        if (gameOver) {
+                            restartGame();
+                        }
                         break;
                 }
             }
@@ -176,11 +180,7 @@ public class GamePanel extends JPanel {
         double platformSpeed = ConfigManager.getPlatformsSettings().getSpeed();
 
         for (Platform p : platforms) {
-            // ================================================================
-            // STEP 1: LANDING LOGIC (Swept Collision)
-            // ================================================================
-            // This handles high-speed falling where the player might pass through
-            // the top edge between frames.
+            // This handles high-speed falling where the player might pass through the top edge between frames.
 
             double playerPrevBottom = player.getPrevY() + player.getHeight();
             double playerCurrBottom = player.getY() + player.getHeight();
@@ -206,6 +206,11 @@ public class GamePanel extends JPanel {
                 // LANDING RESOLUTION
                 player.setY(platformCurrTop - player.getHeight());
 
+                if (!p.isTouchedByPlayer()) {
+                    score++;
+                    p.touchedByPlayer = true;
+                }
+
                 if (p instanceof AutoJumpingPlatform) {
                     player.jump();
                 } else {
@@ -214,6 +219,7 @@ public class GamePanel extends JPanel {
                 }
 
                 // If we landed, we don't need to check for side collisions on this platform
+                p.touchedByPlayer = true;
                 continue;
             }
 
@@ -281,10 +287,21 @@ public class GamePanel extends JPanel {
 
     private void restartGame() {
         gameOver = false;
+        score = 0;
         player = new Player(getWidth() / 2.0, 0);
         platforms.clear();
         initPlatforms();
         lastUpdateTime = System.nanoTime();
+    }
+
+    private void drawCenteredString(Graphics g, String text, int y, Font font, Color color) {
+        Font prev = g.getFont();
+        g.setFont(font);
+        g.setColor(color);
+        FontMetrics fm = g.getFontMetrics(font);
+        int x = (getWidth() - fm.stringWidth(text)) / 2;
+        g.drawString(text, x, y);
+        g.setFont(prev);
     }
 
     @Override
@@ -300,12 +317,20 @@ public class GamePanel extends JPanel {
             if (p.getY() + p.getHeight() > 0) p.draw(g);
         }
         player.draw(g);
+
         if (gameOver) {
-            g.setColor(Color.BLACK);
-            g.setFont(new Font("Arial", Font.BOLD, 48));
-            g.drawString("Game Over", getWidth() / 2 - 120, getHeight() / 2);
-            g.setFont(new Font("Arial", Font.PLAIN, 20));
-            g.drawString("Press 'R' to Restart", getWidth() / 2 - 80, getHeight() / 2 + 50);
+            String title = "Your score: " + score;
+            Font titleFont = new Font("Arial", Font.BOLD, 48);
+            drawCenteredString(g, title, getHeight() / 2, titleFont, Color.WHITE);
+
+            String subtitle = "Press 'R' to Restart";
+            Font subFont = new Font("Arial", Font.PLAIN, 20);
+            drawCenteredString(g, subtitle, getHeight() / 2 + 60, subFont, Color.WHITE);
+        } else {
+            // Score at top-right\
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Arial", Font.BOLD, 20));
+            g.drawString("Score: " + score, getWidth() - 100, 30);
         }
     }
 }

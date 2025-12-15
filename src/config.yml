@@ -2,7 +2,7 @@ game:
   title: "Up Going"
   width: 576
   height: 720
-  fps: 60
+  fps: 180
 
 player:
   gravity: 1200         # Pixels/Second^2
@@ -26,6 +26,3 @@ generation:
   max_gap_y: 250
   spawn_margin_top: 50
   spawn_rate: 100
-
-scoring:
-  multiplier: 0.1

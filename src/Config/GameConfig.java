@@ -7,7 +7,6 @@ public class GameConfig {
     private Player player;
     private Platforms platforms;
     private Generation generation;
-    private Scoring scoring;
 
     public Game getGame() {
         return game;
@@ -25,10 +24,6 @@ public class GameConfig {
         return generation;
     }
 
-    public Scoring getScoring() {
-        return scoring;
-    }
-
     public void setGame(Game game) {
         this.game = game;
     }
@@ -43,10 +38,6 @@ public class GameConfig {
 
     public void setGeneration(Generation generation) {
         this.generation = generation;
-    }
-
-    public void setScoring(Scoring scoring) {
-        this.scoring = scoring;
     }
 
     // Klasy wewnętrzne (nested classes) odpowiadające sekcjom w YAML
@@ -268,18 +259,6 @@ public class GameConfig {
 
         public void setSpawn_rate(int spawn_rate) {
             this.spawn_rate = spawn_rate;
-        }
-    }
-
-    public static class Scoring {
-        private double multiplier;
-
-        public double getMultiplier() {
-            return multiplier;
-        }
-
-        public void setMultiplier(double multiplier) {
-            this.multiplier = multiplier;
         }
     }
 }

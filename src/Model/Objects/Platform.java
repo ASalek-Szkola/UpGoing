@@ -9,6 +9,12 @@ public class Platform extends GameObject implements Collidable {
     private final double velocityY;
     private double prevY;
 
+    public boolean isTouchedByPlayer() {
+        return touchedByPlayer;
+    }
+
+    public boolean touchedByPlayer;
+
     public Platform(double x, double y, int width, int height) {
         super(x, y, width, height);
         // Speed in Pixels Per Second
