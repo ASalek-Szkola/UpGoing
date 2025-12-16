@@ -173,6 +173,16 @@ public class GameConfig {
         private double speed;
         private int spacing;
         private double auto_jump_chance;
+        private double max_speed;
+
+        public double getMax_speed() {
+            return max_speed;
+        }
+
+        public void setMax_speed(double max_speed) {
+            this.max_speed = max_speed;
+        }
+
 
         public double getAuto_jump_chance() {
             return auto_jump_chance;

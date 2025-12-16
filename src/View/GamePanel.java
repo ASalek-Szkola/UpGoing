@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class GamePanel extends JPanel {
     private Timer gameTimer;
@@ -30,7 +29,10 @@ public class GamePanel extends JPanel {
     private double jumpBufferTimer = 0;
     private static final double JUMP_BUFFER_DURATION = ConfigManager.getPlayerSettings().getJump_buffer_duration();
 
-    private int score = 0;
+    private Image bgImage;
+    private double bgY1 = 0;
+    private double bgY2;
+    private double bgSpeed = 50;
 
     public GamePanel() {
         setPreferredSize(new Dimension(
@@ -40,13 +42,17 @@ public class GamePanel extends JPanel {
         setDoubleBuffered(true);
         setFocusable(true);
 
+
+
+
         player = new Player(ConfigManager.getGameSettings().getWidth() / 2.0, 0);
         platforms = new ArrayList<>();
 
         try {
-            backgroundImage = new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/background.jpg"))).getImage();
+            bgImage = new ImageIcon(getClass().getResource("/images/space_bg.png")).getImage();
+            bgY2 = -ConfigManager.getGameSettings().getHeight();
         } catch (Exception e) {
-            System.err.println("Background image not found.");
+            e.printStackTrace();
         }
 
         initPlatforms();
@@ -61,7 +67,7 @@ public class GamePanel extends JPanel {
                     case KeyEvent.VK_RIGHT:
                         player.setVelocityX(ConfigManager.getPlayerSettings().getHorizontal_speed());
                         break;
-                    case KeyEvent.VK_SPACE:
+                    case KeyEvent.VK_UP:
                         // Instead of jumping immediately, register the request
                         jumpBufferTimer = JUMP_BUFFER_DURATION;
                         break;
@@ -173,6 +179,20 @@ public class GamePanel extends JPanel {
         if (player.getY() > getHeight()) {
             gameOver = true;
         }
+
+        // Move backgrounds dowm
+        bgY1 += bgSpeed * deltaTime;
+        bgY2 += bgSpeed * deltaTime;
+
+        int height = ConfigManager.getGameSettings().getHeight();
+
+        // If a background goes off-screen, move it to the top
+        if (bgY1 >= height) {
+            bgY1 = bgY2 - height;
+        }
+        if (bgY2 >= height) {
+            bgY2 = bgY1 - height;
+        }
     }
 
     private void checkCollisions() {
@@ -207,7 +227,7 @@ public class GamePanel extends JPanel {
                 player.setY(platformCurrTop - player.getHeight());
 
                 if (!p.isTouchedByPlayer()) {
-                    score++;
+                    Model.GameStateManager.incrementScore();
                     p.touchedByPlayer = true;
                 }
 
@@ -287,7 +307,7 @@ public class GamePanel extends JPanel {
 
     private void restartGame() {
         gameOver = false;
-        score = 0;
+        Model.GameStateManager.resetScore();
         player = new Player(getWidth() / 2.0, 0);
         platforms.clear();
         initPlatforms();
@@ -307,19 +327,20 @@ public class GamePanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (backgroundImage != null) {
-            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
-        } else {
-            g.setColor(Color.CYAN);
-            g.fillRect(0, 0, getWidth(), getHeight());
+
+        // Draw both backgrounds
+        if (bgImage != null) {
+            g.drawImage(bgImage, 0, (int)bgY1, getWidth(), getHeight(), this);
+            g.drawImage(bgImage, 0, (int)bgY2, getWidth(), getHeight(), this);
         }
+
         for (Platform p : platforms) {
             if (p.getY() + p.getHeight() > 0) p.draw(g);
         }
         player.draw(g);
 
         if (gameOver) {
-            String title = "Your score: " + score;
+            String title = "Your score: " + Model.GameStateManager.getScore();
             Font titleFont = new Font("Arial", Font.BOLD, 48);
             drawCenteredString(g, title, getHeight() / 2, titleFont, Color.WHITE);
 
@@ -327,10 +348,13 @@ public class GamePanel extends JPanel {
             Font subFont = new Font("Arial", Font.PLAIN, 20);
             drawCenteredString(g, subtitle, getHeight() / 2 + 60, subFont, Color.WHITE);
         } else {
-            // Score at top-right\
+            // Score at top-right
             g.setColor(Color.WHITE);
             g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("Score: " + score, getWidth() - 100, 30);
+            g.drawString("Score: " + Model.GameStateManager.getScore(), getWidth() - 100, 30);
+
+            g.setFont(new Font("Arial", Font.PLAIN, 14));
+            g.drawString("High Score: " + Model.GameStateManager.getHighScore(), getWidth() - 100, 50);
         }
     }
 }
