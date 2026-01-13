@@ -42,9 +42,6 @@ public class GamePanel extends JPanel {
         setDoubleBuffered(true);
         setFocusable(true);
 
-
-
-
         player = new Player(ConfigManager.getGameSettings().getWidth() / 2.0, 0);
         platforms = new ArrayList<>();
 
@@ -200,8 +197,6 @@ public class GamePanel extends JPanel {
         double platformSpeed = ConfigManager.getPlatformsSettings().getSpeed();
 
         for (Platform p : platforms) {
-            // This handles high-speed falling where the player might pass through the top edge between frames.
-
             double playerPrevBottom = player.getPrevY() + player.getHeight();
             double playerCurrBottom = player.getY() + player.getHeight();
             double platformPrevTop = p.getPrevY();
@@ -214,21 +209,18 @@ public class GamePanel extends JPanel {
             boolean crossedDownwards = relativePrev <= epsilon && relativeCurr >= -epsilon;
             boolean falling = player.getVelocityY() >= 0; // Only land if falling or flat
 
-            // Horizontal alignment check for landing
             double playerLeft = player.getX();
             double playerRight = player.getX() + player.getWidth();
             double platformLeft = p.getX();
             double platformRight = p.getX() + p.getWidth();
-            // Shrink hit box slightly (2px) to prevent landing on the exact pixel edge
             boolean horizontalOverlap = playerRight > platformLeft + 2 && playerLeft < platformRight - 2;
 
             if (crossedDownwards && falling && horizontalOverlap) {
-                // LANDING RESOLUTION
                 player.setY(platformCurrTop - player.getHeight());
 
                 if (!p.isTouchedByPlayer()) {
                     Model.GameStateManager.incrementScore();
-                    p.touchedByPlayer = true;
+                    p.setTouchedByPlayer(true);
                 }
 
                 if (p instanceof AutoJumpingPlatform) {
@@ -238,8 +230,7 @@ public class GamePanel extends JPanel {
                     player.setOnPlatform(true);
                 }
 
-                // If we landed, we don't need to check for side collisions on this platform
-                p.touchedByPlayer = true;
+                p.setTouchedByPlayer(true);
                 continue;
             }
 
@@ -248,8 +239,6 @@ public class GamePanel extends JPanel {
             Rectangle platRect = p.getBounds();
 
             if (pRect.intersects(platRect)) {
-                // We are intersecting, but NOT landing. We must resolve the collision.
-
                 // Calculate overlaps on both axes
                 double overlapX = 0;
                 double overlapY = 0;
@@ -257,7 +246,7 @@ public class GamePanel extends JPanel {
                 double pCenterX = player.getX() + player.getWidth() / 2.0;
                 double platCenterX = p.getX() + p.getWidth() / 2.0;
                 double dx = pCenterX - platCenterX;
-                // Total width divided by 2
+
                 double combinedHalfWidths = (player.getWidth() + p.getWidth()) / 2.0;
                 overlapX = combinedHalfWidths - Math.abs(dx);
 
@@ -267,17 +256,13 @@ public class GamePanel extends JPanel {
                 double combinedHalfHeights = (player.getHeight() + p.getHeight()) / 2.0;
                 overlapY = combinedHalfHeights - Math.abs(dy);
 
-                // Determine the "Path of Least Resistance"
-                // If overlapX is smaller, we hit the side. If overlapY is smaller, we hit vertical.
-
                 if (overlapX < overlapY) {
                     // Left / Right
-
                     if (dx < 0) {
-                        // Player is to the left, push left
+                        // Push left
                         player.setX(p.getX() - player.getWidth());
                     } else {
-                        // Player is to the right, push right
+                        // Push right
                         player.setX(p.getX() + p.getWidth());
                     }
 
@@ -288,8 +273,6 @@ public class GamePanel extends JPanel {
                     // Bottom
 
                     if (dy > 0) {
-                        // Player center is below Platform center -> Head Bump
-
                         // Push player down below the platform
                         player.setY(p.getY() + p.getHeight());
 

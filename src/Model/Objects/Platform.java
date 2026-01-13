@@ -1,3 +1,4 @@
+// java
 package Model.Objects;
 
 import Model.GameObject;
@@ -9,26 +10,29 @@ import Model.GameStateManager;
 public class Platform extends GameObject implements Collidable {
     private double velocityY;
     private double prevY;
+    private boolean touchedByPlayer;
 
-    public boolean isTouchedByPlayer() {
-        return touchedByPlayer;
-    }
+    // Domyślne wymiary platformy (przykładowe)
+    private static final int DEFAULT_WIDTH = 60;
+    private static final int DEFAULT_HEIGHT = 12;
 
-    public boolean touchedByPlayer;
-
+    // Główny konstruktor
     public Platform(double x, double y, int width, int height) {
         super(x, y, width, height);
-        // Speed in Pixels Per Second
-        this.velocityY = getSpeed();
+        this.velocityY = getSpeed(); // Pixels Per Second
         this.prevY = y;
+        this.touchedByPlayer = false;
+    }
+
+    // Przeciążony konstruktor - używa domyślnych wymiarów
+    public Platform(double x, double y) {
+        this(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
     @Override
     public void update(double deltaTime) {
         velocityY = getSpeed();
         prevY = y;
-
-        // Position += Velocity * Time
         y += velocityY * deltaTime;
     }
 
@@ -39,9 +43,7 @@ public class Platform extends GameObject implements Collidable {
     }
 
     @Override
-    public void onCollision(GameObject other) {
-        // Logic handled in GamePanel
-    }
+    public void onCollision(GameObject other) {}
 
     @Override
     public Rectangle getBounds() {
@@ -49,6 +51,15 @@ public class Platform extends GameObject implements Collidable {
     }
 
     public double getPrevY() { return prevY; }
+
+    // Encapsulation: getter i setter dla touchedByPlayer
+    public boolean isTouchedByPlayer() {
+        return touchedByPlayer;
+    }
+
+    public void setTouchedByPlayer(boolean touched) {
+        this.touchedByPlayer = touched;
+    }
 
     private static double getSpeed() {
         double baseSpeed = ConfigManager.getPlatformsSettings().getSpeed();

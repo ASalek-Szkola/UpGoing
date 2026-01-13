@@ -1,5 +1,3 @@
-// src/Config/GameConfig.java
-
 package Config;
 
 public class GameConfig {
@@ -40,7 +38,6 @@ public class GameConfig {
         this.generation = generation;
     }
 
-    // Klasy wewnętrzne (nested classes) odpowiadające sekcjom w YAML
     public static class Game {
         private String title;
         private int width;

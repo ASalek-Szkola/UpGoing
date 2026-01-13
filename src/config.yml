@@ -17,7 +17,7 @@ platforms:
   base_height: 20
   min_width: 80
   max_width: 150
-  speed: 100.0          # Pixels/Second downwards
+  speed: 80.0          # Pixels/Second downwards
   max_speed: 200.0
   spacing: 120
   auto_jump_chance: 0.2

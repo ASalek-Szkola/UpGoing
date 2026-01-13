@@ -2,7 +2,6 @@
 
 package Main;
 
-import View.MainMenu;
 import View.GamePanel;
 import javax.swing.*;
 

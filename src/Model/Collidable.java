@@ -1,5 +1,3 @@
-// src/Model/Collidable.java
-
 package Model;
 
 import java.awt.*;

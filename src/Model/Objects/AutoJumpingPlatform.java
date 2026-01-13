@@ -10,13 +10,11 @@ public class AutoJumpingPlatform extends Platform {
 
     @Override
     public void draw(Graphics g) {
-        // Draw green body of platform
         g.setColor(new Color(50, 205, 50)); // Lime Green
         g.fillRect((int)x, (int)y, width, height);
 
-        // Optional: Draw a "Spring" or highlight on top
-        g.setColor(new Color(144, 238, 144)); // Light Green
-        g.fillRect((int)x, (int)y, width, 5); // A lighter strip on top
+        g.setColor(new Color(144, 238, 144));
+        g.fillRect((int)x, (int)y, width, 5);
 
         g.setColor(Color.BLACK);
         g.drawRect((int)x, (int)y, width, height);

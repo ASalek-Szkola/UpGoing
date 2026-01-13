@@ -1,5 +1,3 @@
-// src/Model/Types/GameState.java
-
 package Model.Types;
 
 public enum GameState {

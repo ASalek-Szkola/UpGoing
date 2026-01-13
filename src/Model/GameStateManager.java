@@ -4,7 +4,6 @@ public class GameStateManager {
     private static int score = 0;
     private static int highScore = 0;
 
-    // Prevent instantiation
     private GameStateManager() {}
 
     public static int getScore() {

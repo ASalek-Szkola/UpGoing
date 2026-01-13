@@ -62,10 +62,8 @@ public class Player extends GameObject implements Collidable {
     public void jump() {
         velocityY = ConfigManager.getPlayerSettings().getJump_power();
 
-        // Break connection immediately
         onPlatform = false;
 
-        // Invalidate Coyote Time
         timeSinceGrounded = 100.0;
     }
 
